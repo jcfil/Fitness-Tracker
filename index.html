@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health & Fitness</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #191919;
+  --surface2: #222222;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0ede8;
+  --muted: #888;
+  --faint: #555;
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --green-border: rgba(74,222,128,0.3);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.12);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --coral: #fb7185;
+  --coral-dim: rgba(251,113,133,0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Layout */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.main { flex: 1; overflow-y: auto; }
+
+/* Sidebar */
+.logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+.logo-title { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green); }
+.logo-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.nav { padding: 10px 8px; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 400; transition: all 0.15s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--green-dim); color: var(--green); }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sidebar-stats { padding: 14px 16px; border-top: 1px solid var(--border); }
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.stat-row:last-child { margin-bottom: 0; }
+.stat-label { font-size: 11px; color: var(--muted); }
+.stat-val { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text); }
+.stat-val.green { color: var(--green); }
+
+/* Header */
+.page-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+.page-title { font-size: 20px; font-weight: 500; }
+.page-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.header-badge { background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); font-size: 11px; padding: 4px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
+.content { padding: 24px 32px 40px; }
+
+/* Calendar */
+.week-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.week-nav-label { font-size: 14px; font-weight: 500; flex: 1; font-family: 'DM Mono', monospace; color: var(--muted); }
+.btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.btn:hover { border-color: var(--border2); background: #2a2a2a; }
+.btn.primary { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 28px; }
+.cal-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 10px; cursor: pointer; transition: all 0.15s; min-height: 110px; position: relative; }
+.cal-day:hover { border-color: var(--border2); }
+.cal-day.today { border-color: rgba(96,165,250,0.4); }
+.cal-day.selected { border-color: var(--green-border); background: var(--green-dim); }
+.cal-day.done { opacity: 0.55; }
+.cal-day-name { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+.cal-day-num { font-size: 18px; font-weight: 300; margin-bottom: 10px; color: var(--text); }
+.cal-day.today .cal-day-num { color: var(--blue); }
+.tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; display: inline-block; margin-bottom: 3px; font-family: 'DM Mono', monospace; line-height: 1.5; }
+.tag-gym { background: var(--blue-dim); color: var(--blue); }
+.tag-run { background: var(--green-dim); color: var(--green); }
+.tag-yoga { background: var(--purple-dim); color: var(--purple); }
+.tag-interval { background: var(--amber-dim); color: var(--amber); }
+.tag-rest { background: rgba(255,255,255,0.04); color: var(--faint); }
+.check-btn { position: absolute; bottom: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--faint); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; transition: all 0.15s; }
+.check-btn.done { background: var(--green); border-color: var(--green); color: #000; }
+
+/* Detail panel */
+.detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+.detail-head { margin-bottom: 16px; }
+.detail-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+.detail-sub { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.ex-table { width: 100%; border-collapse: collapse; }
+.ex-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); padding: 6px 10px; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; font-weight: 400; }
+.ex-table td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.ex-table tr:last-child td { border-bottom: none; }
+.ex-name { font-weight: 500; font-size: 13px; margin-bottom: 2px; }
+.ex-note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.ex-sets { font-family: 'DM Mono', monospace; font-size: 12px; white-space: nowrap; color: var(--text); }
+.rest-pill { background: var(--amber-dim); color: var(--amber); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-family: 'DM Mono', monospace; white-space: nowrap; }
+.tip-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 16px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.tip-box strong { color: var(--text); font-weight: 500; }
+.run-block { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.run-block:last-child { border-bottom: none; }
+.run-block-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.run-block-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.empty-detail { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; font-family: 'DM Mono', monospace; }
+
+/* Log page */
+.log-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+.log-controls select, .log-controls input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 13px; padding: 8px 12px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; }
+.log-controls select:focus, .log-controls input:focus { outline: none; border-color: var(--green-border); }
+.log-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 24px; }
+.log-form h3 { font-size: 14px; font-weight: 500; margin-bottom: 16px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.form-field { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-family: 'DM Mono', monospace; }
+.form-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 13px; padding: 8px 11px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; width: 100%; }
+.form-input:focus { outline: none; border-color: var(--green-border); }
+.form-input.wide { grid-column: 1 / -1; }
+.ex-log-section { margin-bottom: 14px; }
+.ex-log-section h4 { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+.ex-log-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+.ex-log-name { font-size: 12px; color: var(--muted); }
+.log-entries { }
+.log-entry { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.log-entry-left { flex: 1; }
+.log-entry-date { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--faint); margin-bottom: 4px; }
+.log-entry-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.log-entry-highlights { display: flex; gap: 8px; flex-wrap: wrap; }
+.log-chip { font-size: 11px; font-family: 'DM Mono', monospace; background: var(--surface2); padding: 2px 8px; border-radius: 4px; color: var(--muted); }
+.log-chip.highlight { background: var(--green-dim); color: var(--green); }
+.log-entry-notes { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+.del-btn { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 16px; padding: 2px; line-height: 1; transition: color 0.15s; }
+.del-btn:hover { color: var(--coral); }
+.empty-log { text-align: center; padding: 48px 24px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; }
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+.phase-strip { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.phase-pill { font-size: 11px; padding: 5px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-family: 'DM Mono', monospace; }
+.phase-pill.active { background: var(--blue-dim); color: var(--blue); border-color: rgba(96,165,250,0.3); }
+
+/* Progress page */
+.progress-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+.progress-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+.progress-card-value { font-size: 28px; font-weight: 300; font-family: 'DM Mono', monospace; }
+.progress-card-value.green { color: var(--green); }
+.progress-card-target { font-size: 11px; color: var(--faint); margin-top: 4px; font-family: 'DM Mono', monospace; }
+.bar-wrap { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 10px; }
+.bar-fill { height: 4px; border-radius: 2px; background: var(--green); transition: width 0.5s; }
+.marker-log { }
+.marker-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.marker-row:last-child { border-bottom: none; }
+.marker-name { font-size: 13px; flex: 1; }
+.marker-val { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--green); min-width: 80px; text-align: right; }
+.marker-date { font-size: 11px; color: var(--faint); font-family: 'DM Mono', monospace; min-width: 90px; text-align: right; }
+.update-marker { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 3px 9px; border-radius: 4px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+.update-marker:hover { border-color: var(--green-border); color: var(--green); }
+.input-inline { background: var(--surface2); border: 1px solid var(--green-border); color: var(--text); font-size: 12px; padding: 4px 8px; border-radius: 4px; font-family: 'DM Mono', monospace; width: 80px; }
+.input-inline:focus { outline: none; }
+.grease-box { background: var(--purple-dim); border: 1px solid rgba(167,139,250,0.25); border-radius: var(--radius); padding: 14px 18px; margin-top: 20px; }
+.grease-title { font-size: 12px; font-weight: 500; color: var(--purple); margin-bottom: 4px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+.grease-text { font-size: 12px; color: rgba(167,139,250,0.8); line-height: 1.6; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .shell { flex-direction: column; height: auto; min-height: 100vh; }
+  .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  .nav { display: flex; flex-direction: row; padding: 6px 8px; overflow-x: auto; gap: 4px; }
+  .nav-item { white-space: nowrap; flex-shrink: 0; }
+  .sidebar-stats { display: none; }
+  .main { overflow-y: visible; }
+  .content { padding: 16px; }
+  .page-header { padding: 16px; }
+  .cal-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day { padding: 8px 4px; min-height: 80px; }
+  .cal-day-num { font-size: 14px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .progress-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">H&F</div>
+      <div class="logo-sub">Health & Fitness</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="showPage('calendar')">
+        <span class="nav-dot"></span> Calendar
+      </button>
+      <button class="nav-item" onclick="showPage('log')">
+        <span class="nav-dot"></span> Log workout
+      </button>
+      <button class="nav-item" onclick="showPage('progress')">
+        <span class="nav-dot"></span> Progress
+      </button>
+    </nav>
+    <div class="sidebar-stats" id="sidebar-stats"></div>
+  </div>
+
+  <div class="main">
+    <!-- CALENDAR PAGE -->
+    <div class="page active" id="page-calendar">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Weekly plan</div>
+          <div class="page-subtitle">Tap a day to view the session</div>
+        </div>
+        <div class="header-badge" id="phase-badge">Phase 1 — Foundation</div>
+      </div>
+      <div class="content">
+        <div class="phase-strip">
+          <div class="phase-pill active">Phase 1 · Weeks 1–8</div>
+          <div class="phase-pill">Phase 2 · Weeks 9–16</div>
+          <div class="phase-pill">Phase 3 · Weeks 17–24</div>
+        </div>
+        <div class="week-nav">
+          <span class="week-nav-label mono" id="week-label"></span>
+          <button class="btn" onclick="changeWeek(-1)">← prev</button>
+          <button class="btn" onclick="changeWeek(1)">next →</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="detail" id="detail-panel">
+          <p class="empty-detail">// select a day above</p>
+        </div>
+        <div class="grease-box" style="margin-top:20px">
+          <div class="grease-title">Grease the groove — daily</div>
+          <div class="grease-text">Pull-up bar in your room: 3–5 sets of 3–5 reps spread throughout the day. Never go to failure. Just frequent easy reps. This is your fastest route to 10 pull-ups.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG PAGE -->
+    <div class="page" id="page-log">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Log workout</div>
+          <div class="page-subtitle">Record sessions to track progress</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="log-form">
+          <h3>New entry</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="log-date">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Session type</label>
+              <select class="form-input" id="log-type" onchange="renderLogForm()">
+                <option value="A">Gym A</option>
+                <option value="B">Gym B</option>
+                <option value="C">Gym C</option>
+                <option value="run-interval">Intervals</option>
+                <option value="run-easy">Easy run</option>
+                <option value="run-long">Long run</option>
+                <option value="yoga">Yoga/strength</option>
+              </select>
+            </div>
+          </div>
+          <div id="log-fields"></div>
+          <div class="form-field" style="margin-bottom:12px">
+            <label class="form-label">Notes / how it felt</label>
+            <textarea class="form-input" id="log-notes" rows="2" style="resize:vertical"></textarea>
+          </div>
+          <button class="btn primary" onclick="saveLog()">Save entry</button>
+        </div>
+
+        <div class="section-title">Recent entries</div>
+        <div id="log-list"></div>
+      </div>
+    </div>
+
+    <!-- PROGRESS PAGE -->
+    <div class="page" id="page-progress">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Progress</div>
+          <div class="page-subtitle">Key markers — update weekly</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="progress-grid" id="progress-grid"></div>
+        <div class="divider"></div>
+        <div class="section-title">Marker history</div>
+        <div class="detail" id="marker-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────
+const WEEK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEK_TEMPLATE = [
+  { tags:['gym'], session:'A', label:'Gym A' },
+  { tags:['interval'], session:'run-interval', label:'Intervals' },
+  { tags:['gym','yoga'], session:'B', label:'Gym B + Yoga' },
+  { tags:['run'], session:'run-easy', label:'Easy run' },
+  { tags:['gym'], session:'C', label:'Gym C' },
+  { tags:['run'], session:'run-long', label:'Long run' },
+  { tags:['rest'], session:'rest', label:'Rest' }
+];
+
+const SESSIONS = {
+  A: {
+    title:'Session A — Full body (lower emphasis)',
+    sub:'~55–60 mins · Monday · Lower body emphasis',
+    exercises:[
+      {name:'Barbell back squat',sets:'3 × 8',rest:'90 sec',note:'Start conservative. Brace core, hit depth.'},
+      {name:'Romanian deadlift (dumbbells)',sets:'3 × 10',rest:'90 sec',note:'Control the eccentric. Feel hamstrings loading.'},
+      {name:'Seated dumbbell shoulder press',sets:'3 × 10',rest:'60 sec',note:'Watch for clicking. Stop if sharp pain.'},
+      {name:'Cable row (seated)',sets:'3 × 12',rest:'60 sec',note:'Squeeze shoulder blades at end of each rep.'},
+      {name:'Scapular pull-ups',sets:'3 × 8',rest:'60 sec',note:'Depress and retract shoulder blades before pulling.'},
+      {name:'Barbell glute bridge',sets:'3 × 12',rest:'60 sec',note:'Drive hips fully up. Squeeze at top.'},
+      {name:'Dead bug',sets:'3 × 8 each side',rest:'45 sec',note:'Lower back stays flat on floor throughout.'},
+    ]
+  },
+  B: {
+    title:'Session B — Full body (pull emphasis)',
+    sub:'~55–60 mins · Wednesday · Pull-heavy. Legs relative rest.',
+    exercises:[
+      {name:'Pull-ups',sets:'4 × max (−1 from failure)',rest:'90 sec',note:'Log your reps each session. Key marker.'},
+      {name:'Hex bar deadlift',sets:'3 × 6',rest:'2 min',note:'Start easy. Build load over 3–4 sessions. Hinge, don\'t squat.'},
+      {name:'Machine bench press',sets:'3 × 10',rest:'60 sec',note:'Keep until shoulder is fully stable. Add load gradually.'},
+      {name:'Single-leg RDL (dumbbell)',sets:'3 × 8 each',rest:'60 sec',note:'Slow and controlled. Hip flexor will benefit.'},
+      {name:'Face pull (cable)',sets:'3 × 15',rest:'45 sec',note:'Shoulder rehab. Light weight, external rotation at end.'},
+      {name:'Single-arm dumbbell row',sets:'3 × 12 each',rest:'45 sec',note:'Full range. No hip rotation.'},
+      {name:'Pallof press (cable)',sets:'3 × 10 each side',rest:'45 sec',note:'Anti-rotation core. Keep hips square.'},
+    ]
+  },
+  C: {
+    title:'Session C — Full body (hardest session)',
+    sub:'~55–60 mins · Friday · Highest load. Followed by long run Saturday.',
+    exercises:[
+      {name:'Hex bar deadlift (working weight)',sets:'4 × 5',rest:'2 min',note:'Heavier than Wednesday. 2–3 week progression.'},
+      {name:'Barbell back squat',sets:'4 × 6',rest:'90 sec',note:'More load than Monday. Log the weight.'},
+      {name:'Weighted pull-ups (or +reps)',sets:'3 × 6',rest:'90 sec',note:'Add load when you hit 10 unweighted reps easily.'},
+      {name:'Dips (chest emphasis)',sets:'3 × 10',rest:'60 sec',note:'Forward lean, elbows out. Skip if shoulder pain.'},
+      {name:'Bulgarian split squat (dumbbell)',sets:'3 × 8 each',rest:'60 sec',note:'Glutes and hip flexors will hate this. Correct.'},
+      {name:'Landmine press / cable chest press',sets:'3 × 10',rest:'60 sec',note:'Shoulder-friendly pressing alternative.'},
+      {name:'Plank + shoulder tap',sets:'3 × 20 taps',rest:'45 sec',note:'Hips stay square. Don\'t rock.'},
+    ]
+  },
+  'run-interval': {
+    title:'Threshold intervals — run commute',
+    sub:'Tuesday · ~8km home · HR 168–175 bpm during intervals',
+    isRun:true,
+    structure:[
+      {name:'Warm-up',desc:'10–15 min easy. Stay under 145 bpm. Let HR settle before pushing.'},
+      {name:'Main set',desc:'4–5 × 5–6 min at threshold HR (168–175 bpm). Recovery jog 2–3 min between (drop under 150 bpm before next rep).'},
+      {name:'Cool-down',desc:'5–10 min easy. Walk last few minutes if needed.'},
+    ],
+    tip:'Forget pace — chase heart rate only. In Singapore heat, pace will be slower than it should feel. Log: distance, avg HR, max HR, effort 1–10.'
+  },
+  'run-easy': {
+    title:'Easy Z2 run — run commute',
+    sub:'Thursday · ~8km home · Stay under 145 bpm the whole way',
+    isRun:true,
+    structure:[
+      {name:'Effort',desc:'Strictly under 145 bpm. If HR drifts above, walk until it drops. No exceptions.'},
+      {name:'Heat',desc:'Your Z2 pace with a backpack in Singapore will feel embarrassingly slow. That\'s fine — aerobic base maintenance, not performance.'},
+      {name:'Duration',desc:'~8km commute. No need to extend.'},
+    ],
+    tip:'This run should feel genuinely easy. If it doesn\'t, you\'re going too fast. Chasing pace here is the single biggest mistake you can make.'
+  },
+  'run-long': {
+    title:'Long run',
+    sub:'Saturday · Start before 7am non-negotiable · 18–22km (Phase 1)',
+    isRun:true,
+    structure:[
+      {name:'Start time',desc:'Before 7am. Non-negotiable in Singapore heat.'},
+      {name:'Effort',desc:'Z2 throughout (under 148 bpm). Let HR drift slightly in final 20% — normal cardiac drift.'},
+      {name:'Week 1–2 target',desc:'18km. Add ~1–2km every 2 weeks. Cap at 26km in Phase 1.'},
+      {name:'Nutrition',desc:'Eat something small 60–90 min before. Water + electrolytes. Gel at 60–75 min if going over 90 min.'},
+    ],
+    tip:'Log: distance, time, avg HR, how legs felt. This is where aerobic base gets reinforced — don\'t turn it into a race.'
+  },
+  rest: { title:'Rest day', sub:'Sunday · Full recovery', isRest:true }
+};
+
+const GYM_KEY_LIFTS = {
+  A: [{id:'squat',label:'Squat (kg)'},{id:'rdl',label:'RDL (kg)'},{id:'pullup',label:'Pull-ups (reps)'}],
+  B: [{id:'pullup',label:'Pull-ups (reps)'},{id:'hexdl',label:'Hex DL (kg)'},{id:'bench',label:'Bench (kg)'}],
+  C: [{id:'hexdl',label:'Hex DL (kg)'},{id:'squat',label:'Squat (kg)'},{id:'pullup',label:'Pull-ups (reps)'}]
+};
+
+const DEFAULT_MARKERS = [
+  {id:'vo2max',label:'Garmin VO2 max',unit:'',target:60,value:53,date:'May 2026'},
+  {id:'pullups',label:'Max pull-ups',unit:'reps',target:10,value:7,date:'May 2026'},
+  {id:'fivek',label:'5km time',unit:'min',target:18,value:20,date:'estimated'},
+  {id:'weight',label:'Bodyweight',unit:'kg',target:null,value:74,date:'May 2026'},
+];
+
+// ── STATE ───────────────────────────────────────────
+function load(key,def) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch(e){return def;} }
+function save(key,val) { try { localStorage.setItem(key,JSON.stringify(val)); } catch(e){} }
+
+let weekOffset = 0;
+let selectedDayKey = null;
+let completed = load('completed',{});
+let logs = load('logs',[]);
+let markers = load('markers', DEFAULT_MARKERS);
+
+// ── UTILS ───────────────────────────────────────────
+function today() { return new Date(2026,4,6); }
+function dateKey(d) { return d.toISOString().slice(0,10); }
+function fmtDate(d) { return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function getWeekDates(offset) {
+  const t = today();
+  const dow = t.getDay();
+  const mon = new Date(t);
+  mon.setDate(t.getDate() - (dow===0?6:dow-1) + offset*7);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+
+// ── PAGES ───────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const btns = document.querySelectorAll('.nav-item');
+  const map = {calendar:0,log:1,progress:2};
+  btns[map[p]].classList.add('active');
+  if(p==='log') renderLogForm();
+  if(p==='progress') renderProgress();
+  if(p==='calendar') renderCalendar();
+}
+
+// ── CALENDAR ────────────────────────────────────────
+function renderCalendar() {
+  const dates = getWeekDates(weekOffset);
+  document.getElementById('week-label').textContent = fmtDate(dates[0]) + ' → ' + fmtDate(dates[6]);
+  const todayStr = dateKey(today());
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  dates.forEach((date,i)=>{
+    const key = dateKey(date);
+    const t = WEEK_TEMPLATE[i];
+    const isDone = completed[key];
+    const isToday = key===todayStr;
+    const isSel = selectedDayKey===key;
+
+    const tagHtml = t.tags.map(tag=>{
+      const cls = {gym:'tag-gym',run:'tag-run',yoga:'tag-yoga',interval:'tag-interval',rest:'tag-rest'}[tag]||'tag-rest';
+      const lbl = {gym:'Gym',run:'Run',yoga:'Yoga',interval:'Intervals',rest:'Rest'}[tag];
+      return `<span class="tag ${cls}">${lbl}</span><br>`;
+    }).join('');
+
+    grid.innerHTML += `
+      <div class="cal-day${isToday?' today':''}${isSel?' selected':''}${isDone?' done':''}" onclick="selectDay('${key}',${i})">
+        <div class="cal-day-name">${WEEK[i]}</div>
+        <div class="cal-day-num">${date.getDate()}</div>
+        ${tagHtml}
+        <button class="check-btn${isDone?' done':''}" onclick="toggleDone(event,'${key}')">${isDone?'✓':''}</button>
+      </div>`;
+  });
+
+  renderSidebarStats();
+}
+
+function selectDay(key, idx) {
+  selectedDayKey = key;
+  renderCalendar();
+  const s = SESSIONS[WEEK_TEMPLATE[idx].session];
+  const panel = document.getElementById('detail-panel');
+
+  if(!s) { panel.innerHTML='<p class="empty-detail">// no session data</p>'; return; }
+
+  if(s.isRest) {
+    panel.innerHTML=`<div class="detail-head"><div class="detail-title">${s.title}</div><div class="detail-sub">${s.sub}</div></div><div class="tip-box">Light walk is fine. Foam roll if you want. Recover.</div>`;
+    return;
+  }
+  if(s.isRun) {
+    const rows = s.structure.map(r=>`<div class="run-block"><div class="run-block-title">${r.name}</div><div class="run-block-desc">${r.desc}</div></div>`).join('');
+    panel.innerHTML=`<div class="detail-head"><div class="detail-title">${s.title}</div><div class="detail-sub">${s.sub}</div></div>${rows}<div class="tip-box"><strong>Coaching note:</strong> ${s.tip}</div>`;
+    return;
+  }
+
+  const isWed = WEEK_TEMPLATE[idx].tags.includes('yoga');
+  const rows = s.exercises.map(ex=>`
+    <tr>
+      <td><div class="ex-name">${ex.name}</div><div class="ex-note">${ex.note}</div></td>
+      <td><span class="ex-sets">${ex.sets}</span></td>
+      <td><span class="rest-pill">${ex.rest}</span></td>
+    </tr>`).join('');
+  const yoga = isWed ? `<div class="tip-box" style="margin-top:12px"><strong>This evening:</strong> yoga/strength session. Use it for hip flexors, hamstrings, thoracic mobility. It counts as active recovery.</div>` : '';
+
+  panel.innerHTML=`
+    <div class="detail-head"><div class="detail-title">${s.title}</div><div class="detail-sub">${s.sub}</div></div>
+    <table class="ex-table">
+      <thead><tr><th>Exercise</th><th>Sets × reps</th><th>Rest</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${yoga}
+    <div class="tip-box" style="margin-top:12px"><strong>Grease the groove today:</strong> pull-up bar, 3–5 sets of 3–5 reps spread through the day. Never to failure.</div>`;
+}
+
+function toggleDone(e, key) {
+  e.stopPropagation();
+  completed[key] = !completed[key];
+  save('completed',completed);
+  renderCalendar();
+}
+
+function changeWeek(dir) {
+  weekOffset += dir;
+  selectedDayKey = null;
+  document.getElementById('detail-panel').innerHTML='<p class="empty-detail">// select a day above</p>';
+  renderCalendar();
+}
+
+function renderSidebarStats() {
+  const dates = getWeekDates(weekOffset);
+  const done = dates.filter(d=>completed[dateKey(d)]).length;
+  const pct = Math.round(done/7*100);
+  const m = markers.find(x=>x.id==='vo2max');
+  const pu = markers.find(x=>x.id==='pullups');
+  document.getElementById('sidebar-stats').innerHTML=`
+    <div class="stat-row"><span class="stat-label">This week</span><span class="stat-val green">${done}/7 done</span></div>
+    <div class="stat-row"><span class="stat-label">VO2 max</span><span class="stat-val">${m?m.value:'—'}</span></div>
+    <div class="stat-row"><span class="stat-label">Pull-ups</span><span class="stat-val">${pu?pu.value:'—'} reps</span></div>`;
+}
+
+// ── LOG ─────────────────────────────────────────────
+function renderLogForm() {
+  const type = document.getElementById('log-type').value;
+  const isGym = ['A','B','C'].includes(type);
+  const isRun = type.startsWith('run');
+  let html = '';
+
+  if(isGym) {
+    const lifts = GYM_KEY_LIFTS[type]||[];
+    html += `<div class="ex-log-section"><h4>Key lifts</h4>`;
+    lifts.forEach(l=>{
+      html+=`<div class="ex-log-grid">
+        <span class="ex-log-name">${l.label}</span>
+        <input class="form-input" type="number" id="lift-${l.id}" placeholder="—" step="0.5">
+        <input class="form-input" type="number" id="liftreps-${l.id}" placeholder="reps">
+      </div>`;
+    });
+    html += `</div>`;
+    html += `<div class="form-grid">
+      <div class="form-field"><label class="form-label">Effort (1–10)</label><input class="form-input" type="number" id="log-effort" min="1" max="10" placeholder="7"></div>
+      <div class="form-field"><label class="form-label">Duration (min)</label><input class="form-input" type="number" id="log-duration" placeholder="55"></div>
+    </div>`;
+  } else if(isRun) {
+    html = `<div class="form-grid">
+      <div class="form-field"><label class="form-label">Distance (km)</label><input class="form-input" type="number" id="log-dist" step="0.1" placeholder="8.0"></div>
+      <div class="form-field"><label class="form-label">Duration (min)</label><input class="form-input" type="number" id="log-duration" placeholder="50"></div>
+      <div class="form-field"><label class="form-label">Avg HR (bpm)</label><input class="form-input" type="number" id="log-avghr" placeholder="145"></div>
+      <div class="form-field"><label class="form-label">Max HR (bpm)</label><input class="form-input" type="number" id="log-maxhr" placeholder="175"></div>
+      <div class="form-field"><label class="form-label">Effort (1–10)</label><input class="form-input" type="number" id="log-effort" min="1" max="10" placeholder="7"></div>
+    </div>`;
+  } else {
+    html = `<div class="form-grid">
+      <div class="form-field"><label class="form-label">Duration (min)</label><input class="form-input" type="number" id="log-duration" placeholder="45"></div>
+      <div class="form-field"><label class="form-label">Effort (1–10)</label><input class="form-input" type="number" id="log-effort" min="1" max="10" placeholder="6"></div>
+    </div>`;
+  }
+  document.getElementById('log-fields').innerHTML = html;
+
+  if(!document.getElementById('log-date').value) {
+    document.getElementById('log-date').value = dateKey(today());
+  }
+  renderLogList();
+}
+
+function v(id) { const el=document.getElementById(id); return el?el.value:''; }
+
+function saveLog() {
+  const type = v('log-type');
+  const isGym = ['A','B','C'].includes(type);
+  const isRun = type.startsWith('run');
+  const entry = {
+    id: Date.now(),
+    date: v('log-date') || dateKey(today()),
+    type,
+    effort: v('log-effort'),
+    notes: v('log-notes'),
+  };
+  if(isGym) {
+    const lifts = GYM_KEY_LIFTS[type]||[];
+    entry.lifts = lifts.map(l=>({ id:l.id, label:l.label, kg:v('lift-'+l.id), reps:v('liftreps-'+l.id) })).filter(l=>l.kg||l.reps);
+    entry.duration = v('log-duration');
+  } else if(isRun) {
+    entry.dist = v('log-dist');
+    entry.duration = v('log-duration');
+    entry.avghr = v('log-avghr');
+    entry.maxhr = v('log-maxhr');
+  } else {
+    entry.duration = v('log-duration');
+  }
+  logs.unshift(entry);
+  save('logs',logs);
+  document.getElementById('log-notes').value='';
+  renderLogForm();
+}
+
+function renderLogList() {
+  const list = document.getElementById('log-list');
+  if(!logs.length) { list.innerHTML='<div class="empty-log">// no entries yet — log your first session above</div>'; return; }
+  const typeLabels = {A:'Gym A',B:'Gym B',C:'Gym C','run-interval':'Intervals','run-easy':'Easy run','run-long':'Long run',yoga:'Yoga'};
+  list.innerHTML = logs.slice(0,20).map(e=>{
+    const chips = [];
+    if(e.dist) chips.push({label:parseFloat(e.dist).toFixed(1)+'km',hi:true});
+    if(e.avghr) chips.push({label:'avg '+e.avghr+' bpm',hi:false});
+    if(e.maxhr) chips.push({label:'max '+e.maxhr+' bpm',hi:false});
+    if(e.duration) chips.push({label:e.duration+' min',hi:false});
+    if(e.effort) chips.push({label:'effort '+e.effort+'/10',hi:false});
+    if(e.lifts) e.lifts.forEach(l=>{ if(l.kg) chips.push({label:l.label.split(' ')[0]+' '+l.kg+'kg×'+(l.reps||'?'),hi:true}); });
+    const chipsHtml = chips.map(c=>`<span class="log-chip${c.hi?' highlight':''}">${c.label}</span>`).join('');
+    const dateObj = new Date(e.date+'T12:00:00');
+    return `<div class="log-entry">
+      <div class="log-entry-left">
+        <div class="log-entry-date">${fmtDate(dateObj)}</div>
+        <div class="log-entry-title">${typeLabels[e.type]||e.type}</div>
+        <div class="log-entry-highlights">${chipsHtml}</div>
+        ${e.notes?`<div class="log-entry-notes">${e.notes}</div>`:''}
+      </div>
+      <button class="del-btn" onclick="deleteLog(${e.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteLog(id) {
+  logs = logs.filter(e=>e.id!==id);
+  save('logs',logs);
+  renderLogList();
+}
+
+// ── PROGRESS ─────────────────────────────────────────
+function renderProgress() {
+  const grid = document.getElementById('progress-grid');
+  grid.innerHTML = markers.map(m=>{
+    const pct = m.target ? Math.min(100, Math.round(m.value/m.target*100)) : null;
+    const barHtml = pct!==null ? `<div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>` : '';
+    const targetHtml = m.target ? `Target: ${m.target}${m.unit} · ${pct}% there` : 'Tracking only';
+    return `<div class="progress-card">
+      <div class="progress-card-label">${m.label}</div>
+      <div class="progress-card-value green">${m.value}<span style="font-size:14px;color:var(--muted)"> ${m.unit}</span></div>
+      <div class="progress-card-target">${targetHtml}</div>
+      ${barHtml}
+    </div>`;
+  }).join('');
+
+  const mList = document.getElementById('marker-list');
+  mList.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);padding:6px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-weight:400">Marker</th>
+      <th style="text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);padding:6px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-weight:400">Current</th>
+      <th style="text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);padding:6px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-weight:400">Target</th>
+      <th style="padding:6px 10px;border-bottom:1px solid var(--border)"></th>
+    </tr></thead>
+    <tbody>${markers.map(m=>`
+      <tr>
+        <td style="padding:12px 10px;border-bottom:1px solid var(--border);font-size:13px">${m.label}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:'DM Mono',monospace;font-size:13px;color:var(--green)" id="val-${m.id}">${m.value} ${m.unit}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--faint)">${m.target?m.target+' '+m.unit:'—'}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid var(--border);text-align:right"><button class="update-marker" onclick="editMarker('${m.id}')">update</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function editMarker(id) {
+  const m = markers.find(x=>x.id===id);
+  if(!m) return;
+  const cell = document.getElementById('val-'+id);
+  cell.innerHTML=`<input class="input-inline" type="number" id="edit-${id}" value="${m.value}" step="0.1" onkeydown="if(event.key==='Enter')commitMarker('${id}')"> <button class="update-marker" onclick="commitMarker('${id}')">save</button>`;
+  document.getElementById('edit-'+id).focus();
+}
+
+function commitMarker(id) {
+  const inp = document.getElementById('edit-'+id);
+  if(!inp) return;
+  const m = markers.find(x=>x.id===id);
+  if(m) {
+    m.value = parseFloat(inp.value)||m.value;
+    m.date = fmtDate(today());
+    save('markers',markers);
+    renderProgress();
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────
+const todayStr = dateKey(today());
+const todayDow = today().getDay();
+const todayIdx = todayDow===0?6:todayDow-1;
+renderCalendar();
+selectDay(todayStr, todayIdx);
+renderLogForm();
+renderProgress();
+</script>
+</body>
+</html>
